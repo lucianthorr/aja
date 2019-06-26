@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/lucianthorr/modular_sounds/midi"
-	"github.com/lucianthorr/modular_sounds/modules"
+	"github.com/lucianthorr/aja/midi"
+	"github.com/lucianthorr/aja/modules"
 	"github.com/spf13/cobra"
 )
 

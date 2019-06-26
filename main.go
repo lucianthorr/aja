@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lucianthorr/modular_sounds/cmd"
-	"github.com/lucianthorr/modular_sounds/midi"
-	"github.com/lucianthorr/modular_sounds/modules"
+	"github.com/lucianthorr/aja/cmd"
+	"github.com/lucianthorr/aja/midi"
+	"github.com/lucianthorr/aja/modules"
 	"github.com/manifoldco/promptui"
 )
 

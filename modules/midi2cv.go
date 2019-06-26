@@ -1,7 +1,7 @@
 package modules
 
 import (
-	"github.com/lucianthorr/modular_sounds/midi"
+	"github.com/lucianthorr/aja/midi"
 	"github.com/uber-go/atomic"
 )
 
