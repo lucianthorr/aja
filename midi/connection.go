@@ -2,19 +2,19 @@ package midi
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"time"
 
-	"github.com/gomidi/rtmididrv"
-	"gitlab.com/gomidi/midi/mid"
+	"gitlab.com/gomidi/midi"
+	"gitlab.com/gomidi/midi/reader"
+	"gitlab.com/gomidi/rtmididrv"
 )
 
 // Interface for system to communicate with
 type Interface struct {
 	connected bool
 	Messages  chan Message
-	reader    *mid.Reader
+	driver    *rtmididrv.Driver
+	reader    *reader.Reader
 }
 
 // NewInterface initialized
@@ -27,63 +27,49 @@ func NewInterface() *Interface {
 
 // Connect to the midi device
 func (m *Interface) Connect(index int) {
-	drv, err := rtmididrv.New()
+	var err error
+	if index < 0 {
+		log.Println("MIDI interface not found")
+		return
+	}
+	m.driver, err = rtmididrv.New()
 	if err != nil {
 		log.Println(err)
 	}
-	defer drv.Close()
-	ins, err := drv.Ins()
+
+	ins, err := m.driver.Ins()
 	if err != nil {
 		log.Println(err)
 	}
-	portNum := index - 1
+	portNum := index
 	in := ins[portNum]
 	if err := in.Open(); err != nil {
 		log.Println(err)
 	}
 
-	if err := m.configureReader(in); err != nil {
-		log.Println(err)
-		return
+	m.reader = reader.New(reader.NoLogger(),
+		reader.Each(func(pos *reader.Position, msg midi.Message) {
+			fmt.Println(pos)
+			fmt.Println(msg)
+			m.Messages <- Message{
+				Value:    "value",
+				Channel:  1,
+				Key:      2,
+				Velocity: 90,
+			}
+		}),
+	)
+	if err := m.reader.ListenTo(in); err != nil {
+		log.Fatal("Error listening for MIDI", err)
 	}
-	// TODO: change shared variables to use sync package and Waits vs loops.
-	for m.connected == true {
-		time.Sleep(time.Millisecond)
-		// select {
-		// case msg := <-m.messages:
-		// 	fmt.Println(msg)
-		// default:
-		// }
-	}
-}
-
-func (m *Interface) configureReader(in mid.In) error {
-	m.reader = mid.NewReader(mid.NoLogger())
-	mid.ConnectIn(in, m.reader)
 	m.connected = true
-	m.reader.Msg.Channel.NoteOn = m.enqueueMessage("NoteOn")
-	m.reader.Msg.Channel.NoteOff = m.enqueueMessage("NoteOff")
-	err := m.reader.ReadAll()
-	if err != nil && err != io.EOF {
-		return err
-	}
-	return nil
-}
+	fmt.Println("Connected to device")
 
-// enqueueMessages coming from midi into messages that we care about
-func (m *Interface) enqueueMessage(val string) func(*mid.Position, uint8, uint8, uint8) {
-	return func(p *mid.Position, c, k, v uint8) {
-		m.Messages <- Message{
-			Value:    val,
-			Channel:  c,
-			Key:      k,
-			Velocity: v,
-		}
-	}
 }
 
 // Disconnect from midi port
 func (m *Interface) Disconnect() {
+	defer m.driver.Close()
 	m.connected = false
 	fmt.Println("Disconnected from device")
 }
@@ -102,4 +88,22 @@ func (m *Interface) List() {
 	for i := range ins {
 		fmt.Printf("%d:\t%s\n", i+1, ins[i].String())
 	}
+}
+
+func (m *Interface) GetIndex(name string) int {
+	drv, err := rtmididrv.New()
+	if err != nil {
+		log.Println(err)
+	}
+	defer drv.Close()
+	ins, err := drv.Ins()
+	if err != nil {
+		log.Println(err)
+	}
+	for i := range ins {
+		if name == ins[i].String() {
+			return i
+		}
+	}
+	return -1
 }

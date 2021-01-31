@@ -58,10 +58,11 @@ func Init(sr SampleRate, bufferSize int) (chan Signal, error) {
 	buf = make([]byte, numBytes)
 
 	var err error
-	player, err = oto.NewPlayer(int(sr), 2, 2, numBytes)
+	ctx, err := oto.NewContext(int(sr), 2, 2, numBytes)
 	if err != nil {
-		return speakerIn, errors.Wrap(err, "failed to initialize speaker")
+		return speakerIn, errors.Wrap(err, "failed to initialize context")
 	}
+	player = ctx.NewPlayer()
 	done = make(chan struct{})
 
 	go func() {

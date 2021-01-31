@@ -2,7 +2,7 @@ package modules
 
 import (
 	"github.com/lucianthorr/aja/midi"
-	"github.com/uber-go/atomic"
+	"go.uber.org/atomic"
 )
 
 type Controller func(*atomic.Float64)

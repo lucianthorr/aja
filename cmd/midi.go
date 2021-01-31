@@ -1,38 +1,26 @@
 package cmd
 
 import (
-	"log"
-	"strconv"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List Available Midi Devices",
+var midiCmd = &cobra.Command{
+	Use:   "midi",
+	Short: "Signifies MIDI related commands",
 	Run: func(cmd *cobra.Command, args []string) {
-		midiInput.List()
-	},
-}
-
-var connectCmd = &cobra.Command{
-	Use:   "connect",
-	Short: "Connect to a given device",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 1 {
-			index, err := strconv.Atoi(args[0])
-			if err != nil {
-				log.Println(err)
-			}
-			midiInput.Connect(index)
+		fmt.Println("This command requires subcommands")
+		subCmds := cmd.Commands()
+		for i, subCmd := range subCmds {
+			fmt.Printf("%d:\t%s\n", i, subCmd.Use)
 		}
 	},
 }
-
-var disconnectCmd = &cobra.Command{
-	Use:   "disconnect",
-	Short: "Disconnects from current midi device",
+var listCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "List Available Midi Devices",
 	Run: func(cmd *cobra.Command, args []string) {
-		midiInput.Disconnect()
+		midiInput.List()
 	},
 }
