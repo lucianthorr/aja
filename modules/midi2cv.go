@@ -1,11 +1,11 @@
 package modules
 
 import (
-	"github.com/lucianthorr/aja/midi"
+	"gitlab.com/gomidi/midi"
 	"go.uber.org/atomic"
 )
 
-type Controller func(*atomic.Float64)
+type Controller func(*atomic.Float64, *atomic.Float64)
 
 // Note from midi to frequency in Hertz
 type Note struct {
@@ -126,22 +126,28 @@ var notes = []Note{
 }
 
 // Midi2CV translator
-func Midi2CV(m *midi.Interface) Controller {
+func Midi2CV(msgChan <-chan midi.Message) Controller {
 	noteMap := make(map[uint8]float64)
 	for _, note := range notes {
 		noteMap[note.Key] = note.Freq
 	}
-	return func(parameter *atomic.Float64) {
+	return func(key, velocity *atomic.Float64) {
 		for {
 			select {
-			case msg := <-m.Messages:
-				if msg.Value == "NoteOn" {
-					f := noteMap[msg.Key]
-					parameter.Store(f)
-				}
+			case msg := <-msgChan:
+				k, v := decodeMsg(msg)
+				f := noteMap[k]
+				key.Store(f)
+				velocity.Store(float64(v))
 			default:
 			}
 
 		}
 	}
+}
+
+func decodeMsg(msg midi.Message) (uint8, float64) {
+	raw := msg.Raw()
+	_, key, velocity := raw[0], raw[1], raw[2]
+	return uint8(key), float64(velocity) / 127.0
 }

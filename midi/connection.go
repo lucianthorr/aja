@@ -12,7 +12,7 @@ import (
 // Interface for system to communicate with
 type Interface struct {
 	connected bool
-	Messages  chan Message
+	Messages  chan midi.Message
 	driver    *rtmididrv.Driver
 	reader    *reader.Reader
 }
@@ -21,7 +21,7 @@ type Interface struct {
 func NewInterface() *Interface {
 	return &Interface{
 		connected: false,
-		Messages:  make(chan Message),
+		Messages:  make(chan midi.Message),
 	}
 }
 
@@ -49,14 +49,7 @@ func (m *Interface) Connect(index int) {
 
 	m.reader = reader.New(reader.NoLogger(),
 		reader.Each(func(pos *reader.Position, msg midi.Message) {
-			fmt.Println(pos)
-			fmt.Println(msg)
-			m.Messages <- Message{
-				Value:    "value",
-				Channel:  1,
-				Key:      2,
-				Velocity: 90,
-			}
+			m.Messages <- msg
 		}),
 	)
 	if err := m.reader.ListenTo(in); err != nil {

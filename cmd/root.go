@@ -35,7 +35,6 @@ var rootCmd = &cobra.Command{
 	Short: "A simple midi capable synthesizer",
 	Run: func(cmd *cobra.Command, args []string) {
 		sigs := make(chan os.Signal, 1)
-
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 		config, err := LoadConfig()
@@ -43,20 +42,18 @@ var rootCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		sr := modules.SampleRate(48000)
-		bufferSize := sr.N(22 * time.Millisecond)
+		bufferSize := sr.N(10 * time.Millisecond)
 		speakerOut, err = modules.Init(sr, bufferSize)
 		if err != nil {
 			log.Fatal(err)
 		}
-		midi2CV := modules.Midi2CV(midiInput)
+		midi2CV := modules.Midi2CV(midiInput.Messages)
 		midiInput.Connect(midiInput.GetIndex(config.MidiInput))
 		defer midiInput.Disconnect()
 
 		params, vco := modules.VCO(&sr, sigs)
-		go midi2CV(params.Freq)
+		go midi2CV(params.Freq, params.Amp)
 		params.Waveform.Store("sine")
-		params.Freq.Store(440.0)
-		params.Amp.Store(0.5)
 		vco(speakerOut)
 	},
 }
